@@ -12,6 +12,7 @@ talks to Luxir's HTTP API.
   - [Collections](#collections)
   - [Schema](#schema)
   - [Indexing](#indexing)
+  - [Bulk indexing](#bulk-indexing)
   - [Searching](#searching)
   - [Faceting](#faceting)
   - [Fetching a single document](#fetching-a-single-document)
@@ -146,6 +147,32 @@ client.update("books",
 )
 ```
 
+### Bulk indexing
+
+For loading more documents than comfortably fit in one request, `BulkIndexer`
+batches them into bounded `update()` calls instead of one giant request or
+one request per document:
+
+```python
+from luxir_client.helpers import BulkIndexer
+
+with BulkIndexer(client, "books", batch_size=500) as bulk:
+    for doc in read_a_few_million_docs():
+        bulk.add(doc)
+# remaining buffered docs are flushed and committed automatically on exit
+```
+
+By default, batches are sent uncommitted as they fill (for throughput) and
+only committed once, at the end — pass `commit_every_batch=True` if you want
+each batch visible as it lands instead. `bulk.docs_sent`/`bulk.batches_sent`
+track progress; `bulk.flush()`/`bulk.close()` are available if you're not
+using it as a context manager. If the `with` block raises, nothing is
+auto-flushed — the partially-filled buffer is left on `bulk._buffer` for you
+to inspect or send manually.
+
+This batches bounded JSON requests; it isn't Luxir's native NDJSON streaming
+ingest (see [What's not here yet](#whats-not-here-yet)).
+
 ### Searching
 
 ```python
@@ -277,8 +304,8 @@ This is deliberately a lightweight first cut. Not implemented, add as
 needed:
 
 - gRPC transport (`luxir.Indexer`/`luxir.Searcher`/`luxir.Admin`)
-- NDJSON bulk streaming for indexing (currently one bounded JSON
-  request per `update()`/`index()` call)
+- NDJSON bulk streaming for indexing (`BulkIndexer` batches bounded JSON
+  requests; it doesn't use Luxir's streaming ingest endpoint)
 - A structured query-builder helper (`Q.match(...)`, `Q.boolean(...)`, etc.)
 - kind-aware retry/backoff (currently: no automatic retries at all,
   other than failing over to the next host on connection errors)
