@@ -4,7 +4,7 @@ from .schema import Schema
 from .collections import Collections
 from . import exceptions
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 __all__ = [
     "LuxirClient",

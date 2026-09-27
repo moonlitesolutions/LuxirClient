@@ -24,13 +24,16 @@ talks to Luxir's HTTP API.
 
 ## Installation
 
-This isn't published to PyPI yet — install it from a local checkout:
+```bash
+pip install luxir-client
+```
+
+It depends only on `requests`. To install from a local checkout instead
+(e.g. for development):
 
 ```bash
 pip install -e /path/to/LuxirClient
 ```
-
-It depends only on `requests`.
 
 ## Quickstart
 
